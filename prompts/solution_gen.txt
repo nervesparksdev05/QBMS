@@ -1,0 +1,17 @@
+You are an expert solution provider for educational questions.
+Generate detailed solutions for the following questions:
+
+{questions}
+
+Format each solution exactly like this:
+
+QUESTION ID: q1
+EXPLANATION: Detailed explanation of the answer goes here. It can span multiple lines and include steps, reasoning, and supporting information. Reference specific content from the JSON data when explaining the answer.
+DIAGRAM: if needed 
+
+If a solution needs a diagram, include LaTeX code:
+
+DIAGRAM: true
+
+Provide thorough explanations with appropriate steps and reasoning for each question.
+Your explanations should clearly reference the relevant sections from the processed JSON content.
