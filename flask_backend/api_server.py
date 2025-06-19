@@ -83,6 +83,11 @@ def upload_document():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+@api_app.route('/api/documents-index')
+def get_index():
+    with open("data/documents_index.json") as f:
+        return jsonify(json.load(f))
 
 @api_app.route('/api/conversation', methods=['POST'])
 def store_conversation():

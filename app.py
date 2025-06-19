@@ -100,11 +100,22 @@ def load_conversation_data():
 load_conversation_data()
 
 # Load existing documents
+# def load_existing_documents():
+#     if os.path.exists("data/documents_index.json"):
+#         with open("data/documents_index.json", "r") as f:
+#             return json.load(f)
+#     return {}
+
 def load_existing_documents():
-    if os.path.exists("data/documents_index.json"):
-        with open("data/documents_index.json", "r") as f:
-            return json.load(f)
-    return {}
+    try:
+        response = requests.get(f"{backend_url}/api/documents-index")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {}
+    except Exception as e:
+        st.error(f"Error fetching documents index: {e}")
+        return {}
 
 # Save documents index
 def save_documents_index():
