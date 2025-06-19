@@ -1,4 +1,5 @@
 import streamlit as st
+from dotenv import load_dotenv
 import os
 import json
 import tempfile
@@ -24,6 +25,7 @@ import subprocess
 import fitz
 from PIL import Image
 
+
 # Set page configuration
 st.set_page_config(
     page_title="Question Generator",
@@ -31,6 +33,7 @@ st.set_page_config(
     layout="wide"
 )
 
+load_dotenv()
 from api_server import start_api_server
 
 DIAGRAM_FOLDER = os.path.join(os.getcwd(), "temp_diagrams")
@@ -68,16 +71,16 @@ if 'latex_diagrams' not in st.session_state:
 if 'conversation_data' not in st.session_state:
     st.session_state.conversation_data = None
 
+frontend_url = os.getenv("FRONTEND_URL")
+backend_url = os.getenv("BACKEND_FLASK_QBMS_APP")
+
 def load_conversation_data():
-    """Load conversation data from API server"""
-    # Get conversation_id from URL parameters
     query_params = st.query_params
     conversation_id = query_params.get('conversation_id')
     
     if conversation_id and st.session_state.conversation_data is None:
         try:
-            # Fetch data from API server
-            response = requests.get(f'http://localhost:5001/api/conversation/{conversation_id}')
+            response = requests.get(f'{backend_url}/api/conversation/{conversation_id}')
             
             if response.status_code == 200:
                 result = response.json()
@@ -478,7 +481,6 @@ def calculate_and_submit_quiz_results(questions):
         st.success(f"🎉 Quiz Completed!")
         st.metric("Your Score", f"{correct_answers}/{total_questions}", f"{score_percentage:.1f}%")
         
-        # Performance feedback
         if score_percentage >= 80:
             st.success("🌟 Excellent performance!")
         elif score_percentage >= 60:
@@ -486,22 +488,20 @@ def calculate_and_submit_quiz_results(questions):
         else:
             st.warning("📚 Consider reviewing the material again.")
         
-        # Store results in session state
         st.session_state.quiz_completed = True
         st.session_state.quiz_score = score_percentage
         
-        # Redirect to React app with results
-        redirect_url = "http://localhost:5173/"  # Your frontend results page
+        redirect_url = frontend_url
+        st.info("Redirecting to results page in 10 seconds...")
         st.markdown(f"""
             <meta http-equiv="refresh" content="3;url={redirect_url}">
             <script>
                 setTimeout(function() {{
                     window.location.href = "{redirect_url}";
-                }}, 3000);
+                }}, 10000);
             </script>
         """, unsafe_allow_html=True)
         
-        st.info("Redirecting to results page in 3 seconds...")
             
         # else:
         #     st.error("Failed to save quiz results. Please try again.")

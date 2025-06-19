@@ -9,13 +9,11 @@ import json
 from utils.pdf_parser import parse_pdf
 import time
 
-# Create Flask app for API endpoints
 api_app = Flask(__name__)
 CORS(api_app)  
 
 conversation_storage = {}
 
-# File-based storage as backup
 STORAGE_DIR = "data/conversations"
 os.makedirs(STORAGE_DIR, exist_ok=True)
 
@@ -46,12 +44,10 @@ def upload_document():
         
         text_by_page, images_by_page = parse_pdf(temp_file_path)
 
-        # Load current documents from file
         documents = {}
         document_id = f"{subject.lower().replace(' ', '')}_1"
 
         
-        # Store document data
         documents[document_id] = {
             "type": "pdf",
             "name": filename,
@@ -62,7 +58,6 @@ def upload_document():
             "path": f"data/processed/{document_id}.json"
         }
 
-        # Save to processed file
         os.makedirs("data/processed", exist_ok=True)
         with open(f"data/processed/{document_id}.json", "w") as f:
             json.dump({
@@ -74,7 +69,6 @@ def upload_document():
                 "images": images_by_page
             }, f)
 
-        # Save updated documents index
         with open("data/documents_index.json", "w") as f:
             json.dump(documents, f)
 
@@ -122,14 +116,12 @@ def store_conversation():
 @api_app.route('/api/conversation/<conversation_id>', methods=['GET'])
 def get_conversation(conversation_id):
     try:
-        # First try in-memory storage
         if conversation_id in conversation_storage:
             return jsonify({
                 'success': True,
                 'data': conversation_storage[conversation_id]['data']
             })
         
-        # Fallback to file storage
         file_path = os.path.join(STORAGE_DIR, f"{conversation_id}.json")
         if os.path.exists(file_path):
             with open(file_path, 'r') as f:
@@ -145,7 +137,6 @@ def get_conversation(conversation_id):
         return jsonify({'error': str(e)}), 500
 
 def cleanup_old_conversations():
-    """Clean up conversations older than 1 hour"""
     while True:
         current_time = time.time()
         to_remove = []
@@ -165,9 +156,7 @@ def cleanup_old_conversations():
 
 @api_app.route('/api/quiz-results', methods=['POST'])
 def store_quiz_results():
-    """Store quiz results and return quiz ID"""
     try:
-        print("here")
         data = request.json
         quiz_id = data.get('quiz_id')
 
@@ -177,14 +166,12 @@ def store_quiz_results():
             quiz_id = f"quiz_{int(time.time())}"
             data['quiz_id'] = quiz_id
         
-        # Store in memory
         conversation_storage[f"quiz_{quiz_id}"] = {
             'data': data,
             'timestamp': time.time(),
             'type': 'quiz_results'
         }
-        
-        # Also save to file
+
         quiz_file_path = os.path.join(STORAGE_DIR, f"quiz_{quiz_id}.json")
         with open(quiz_file_path, 'w') as f:
             json.dump(data, f, indent=2)
@@ -204,14 +191,12 @@ def get_quiz_results(quiz_id):
     try:
         storage_key = f"quiz_{quiz_id}"
         
-        # First try in-memory storage
         if storage_key in conversation_storage:
             return jsonify({
                 'success': True,
                 'data': conversation_storage[storage_key]['data']
             })
         
-        # Fallback to file storage
         file_path = os.path.join(STORAGE_DIR, f"quiz_{quiz_id}.json")
         if os.path.exists(file_path):
             with open(file_path, 'r') as f:
