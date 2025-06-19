@@ -6,7 +6,7 @@ import base64
 import tempfile
 import os
 import json
-from utils.pdf_parser import parse_pdf
+from flask_backend.pdf_parser import parse_pdf
 import time
 
 api_app = Flask(__name__)
@@ -16,6 +16,7 @@ conversation_storage = {}
 
 STORAGE_DIR = "data/conversations"
 os.makedirs(STORAGE_DIR, exist_ok=True)
+os.makedirs("data/processed", exist_ok=True)
 
 def load_existing_documents():
     if os.path.exists("data/documents_index.json"):
@@ -215,15 +216,7 @@ def get_quiz_results(quiz_id):
 def health_check():
     return jsonify({'status': 'API server is running'})
 
-def run_api():
-    api_app.run(host='0.0.0.0', port=5001, debug=False, use_reloader=False)
-
-# Start API server function
-def start_api_server():
-    if 'api_started' not in st.session_state:
-        st.session_state.api_started = True
-        api_thread = threading.Thread(target=run_api, daemon=True)
-        api_thread.start()
-        time.sleep(1)
-        return True
-    return False
+if __name__ == "__main__":
+    cleanup_thread = threading.Thread(target=cleanup_old_conversations, daemon=True)
+    cleanup_thread.start()
+    api_app.run(host="0.0.0.0", port=5001, debug=False)

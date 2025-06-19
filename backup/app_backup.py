@@ -2,7 +2,7 @@ import streamlit as st
 import os
 import json
 import tempfile
-from utils.pdf_parser import parse_pdf
+from flask_backend.pdf_parser import parse_pdf
 from utils.book_proccessor import process_book
 from utils.model_interface import generate_questions, generate_solutions
 from components.difficulty_selector import create_difficulty_selector

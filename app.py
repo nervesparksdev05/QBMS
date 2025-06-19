@@ -6,7 +6,7 @@ import tempfile
 import base64
 from io import BytesIO
 import matplotlib.pyplot as plt
-from utils.pdf_parser import parse_pdf
+from flask_backend.pdf_parser import parse_pdf
 from utils.model_interface import generate_questions_with_duplicate_check, solve_questions, update_questions_with_user_selections, generate_diagrams_for_selected_questions, generate_diagram_with_instructions, convert_question_difficulty
 from utils.diagram_generator import DiagramGenerator
 from components.difficulty_selector import create_difficulty_selector
@@ -34,13 +34,13 @@ st.set_page_config(
 )
 
 load_dotenv()
-from api_server import start_api_server
+# from api_server import start_api_server
 
 DIAGRAM_FOLDER = os.path.join(os.getcwd(), "temp_diagrams")
 os.makedirs(DIAGRAM_FOLDER, exist_ok=True)
 
-if start_api_server():
-    print("API server started on port 5001")
+# if start_api_server():
+#     print("API server started on port 5001")
 
 # Create necessary directories
 os.makedirs("data/uploaded", exist_ok=True)

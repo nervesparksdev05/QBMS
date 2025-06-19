@@ -5,7 +5,7 @@ import tempfile
 import base64
 from io import BytesIO
 import matplotlib.pyplot as plt
-from utils.pdf_parser import parse_pdf
+from flask_backend.pdf_parser import parse_pdf
 from utils.model_interface import generate_questions_with_duplicate_check, generate_solutions, update_questions_with_user_selections, generate_diagrams_for_selected_questions
 from utils.diagram_generator import DiagramGenerator
 from components.difficulty_selector import create_difficulty_selector
