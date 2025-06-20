@@ -407,10 +407,10 @@ def display_questions_with_selection(questions, show_diagrams=True, enable_selec
                 for j, option in enumerate(options):
                     option_letter = chr(65 + j)
                     is_correct = option == correct_answer
-                    if is_correct:
-                        st.markdown(f"✅ **{option_letter}. {option}** (Correct)")
-                    else:
-                        st.markdown(f"- {option_letter}. {option}")
+                    # if is_correct:
+                    #     st.markdown(f"✅ **{option_letter}. {option}** (Correct)")
+                    # else:
+                    st.markdown(f"- {option_letter}. {option}")
 
         st.caption(f"Source: {question.get('source', 'Not specified')}")
         st.markdown("---")
@@ -854,62 +854,10 @@ def is_duplicate_question(question, existing_questions, similarity_threshold=0.8
     return False
 
 # App title
-st.markdown("# AI Question Bank Management System")
+st.markdown("# Training Session")
 
 # Tabs for main navigation
-upload_tab, generate_tab, view_all_tab = st.tabs(["Upload Document", "Generate Questions", "View All Questions"])
-
-# Upload Document Tab
-with upload_tab:
-    st.header("Upload PDF Document")
-
-    exam_options = ["Class X", "Class XI", "Class XII" , "Other"]
-    exam_type = st.selectbox("Select Exam Type", exam_options)
-
-    if exam_type == "Other":
-        exam_type = st.text_input("Enter Exam Name")
-
-    subject = st.text_input("Subject (e.g. Physics, Maths)")
-
-    uploaded_file = st.file_uploader("Upload PDF", type=["pdf"], key="pdf_uploader")
-
-    if uploaded_file is not None and subject and exam_type:
-        if st.button("Process Document"):
-            with st.spinner("Processing PDF..."):
-                # Save uploaded file temporarily
-                temp_file = tempfile.NamedTemporaryFile(delete=False)
-                temp_file.write(uploaded_file.getvalue())
-                temp_file_path = temp_file.name
-                temp_file.close()
-
-                # Process PDF
-                document_id = f"{subject.lower().replace(' ', '')}_{len(st.session_state.documents) + 1}"
-                text_by_page, images_by_page = parse_pdf(temp_file_path)
-
-                st.session_state.documents[document_id] = {
-                    "type": "pdf",
-                    "name": uploaded_file.name,
-                    "subject": subject,
-                    "exam_type": exam_type,
-                    "content": text_by_page,
-                    "images": images_by_page,
-                    "path": f"data/processed/{document_id}.json"
-                }
-
-                # Save processed content
-                with open(f"data/processed/{document_id}.json", "w") as f:
-                    json.dump({
-                        "type": "pdf",
-                        "name": uploaded_file.name,
-                        "subject": subject,
-                        "exam_type": exam_type,
-                        "content": text_by_page,
-                        "images": images_by_page
-                    }, f)
-
-                os.unlink(temp_file_path)  # Remove temp file
-                save_documents_index()  # Save updated document index
-                st.success(f"Document processed successfully! You can now generate questions for {subject}.")
+generate_tab, view_all_tab = st.tabs(["Generate Questions", "View All Questions"])
 
 # Generate Questions Tab
 with generate_tab:
@@ -919,7 +867,7 @@ with generate_tab:
         st.info("No documents uploaded yet. Please upload PDFs in the 'Upload Document' tab.")
     else:
         # Document selection
-        st.subheader("1. Select Document")
+        st.subheader("1. Selected Document")
         
         # Group documents by subject
         subjects = {}
@@ -930,7 +878,7 @@ with generate_tab:
             subjects[subject].append((doc_id, doc["name"], doc.get("exam_type", "Unknown")))
         
         selected_subject = st.selectbox(
-            "Select Subject",
+            "Subject",
             options=list(subjects.keys())
         )
         
@@ -940,7 +888,7 @@ with generate_tab:
             doc_ids = [doc_id for doc_id, _, _ in docs_in_subject]
             
             selected_doc_index = st.selectbox(
-                "Select PDF",
+                "PDF",
                 options=range(len(doc_options)),
                 format_func=lambda x: doc_options[x]
             )
@@ -954,12 +902,13 @@ with generate_tab:
             st.write(f"Pages: {len(doc['content'])}")
             
             # Question generation settings
-            st.subheader("2. Question Generation Settings")
+            # st.subheader("2. Question Generation Settings")
             
-            num_questions = st.number_input("Number of Questions", min_value=1, max_value=50, value=10)
+            num_questions = 0
             # page_range = st.slider("Page Range", 1, len(doc['content']), (1, min(5, len(doc['content']))))
-            page_range = st.slider("Page Range", 1, len(doc['content']), (1, len(doc['content'])))
-            difficulty_options = create_difficulty_selector(num_questions)
+            # page_range = st.slider("Page Range", 1, len(doc['content']), (1, len(doc['content'])))
+            # difficulty_options = create_difficulty_selector(num_questions)
+            difficulty_options = {'easy': 0, 'medium': 0, 'hard': 0}
             
             if st.session_state.conversation_data:
                 st.info(f"🎯 Questions will be generated based on your conversation about: **{st.session_state.conversation_data.get('topic')}**")
@@ -970,10 +919,9 @@ with generate_tab:
             
             # Generate Questions button
             if st.button("Generate Questions"):
-                with st.spinner(f"Generating {num_questions} questions..."):
+                with st.spinner(f"Generating questions..."):
                     # Prepare content from selected pages
-                    content_to_use = {i+1: page for i, page in enumerate(doc['content']) 
-                                    if i+1 >= page_range[0] and i+1 <= page_range[1]}
+                    content_to_use = {i+1: page for i, page in enumerate(doc['content'])}
                     
                     # Generate questions with duplicate checking
                     questions = generate_questions_with_duplicate_check(
@@ -1017,8 +965,7 @@ with generate_tab:
                 st.subheader("3. Select Questions for Diagrams")
                 st.info("Check the questions you want to generate diagrams for:")
 
-                content_to_use = {i+1: page for i, page in enumerate(doc['content']) 
-                                    if i+1 >= page_range[0] and i+1 <= page_range[1]}
+                content_to_use = {i+1: page for i, page in enumerate(doc['content'])}
                 
                 selected_questions = display_questions_with_selection(
                     st.session_state.generated_questions, 

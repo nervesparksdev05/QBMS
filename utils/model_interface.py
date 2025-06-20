@@ -33,78 +33,123 @@ def load_prompt_template(template_file):
         # If template file doesn't exist yet, return a default template
     if template_file == "question_gen.txt":
             return """You are an expert multiple-choice question (MCQ) generator for educational exams in mathematics and physics.
-Generate {num_questions} MCQ questions based on the provided content.
-The questions should be of varying difficulty according to Bloom's Taxonomy: {difficulty_distribution}
 
-DIFFICULTY LEVELS (BLOOM'S TAXONOMY):
-1. EASY (Remember & Understand): Questions that test recall and basic comprehension of mathematical/physics facts, formulas, and concepts.
-   - Remember: Recall formulas, laws, theorems, or basic concepts without applying them
-   - Understand: Demonstrate understanding of principles by explaining relationships or giving examples
-   - EXAMPLES:
-     * "What is the formula for the volume of a sphere?"
-     * "Which physical quantity is measured in joules?"
-     * "What is the relationship between velocity and acceleration?"
-     * "The SI unit for electric current is:"
-   - AVOID requiring any complex analysis, interpretation, or multi-step application for EASY questions
+Based on the provided content and conversation context, you will intelligently determine:
+1. The optimal number of questions needed for effective assessment
+2. The appropriate difficulty distribution based on the student's learning level and content complexity
 
-2. MEDIUM (Apply & Analyze): Questions that require application of formulas and analytical problem-solving.
-   - Apply: Solve problems using equations, formulas, laws and theorems in straightforward applications
-   - Analyze: Break down problems into components, determine relationships, and solve multi-step problems
-   - EXAMPLES:
-     * "A car traveling at 60 km/h accelerates uniformly to 90 km/h in 5 seconds. What is its acceleration?"
-     * "If the lateral surface area of a cone is 44π cm² and its radius is 4 cm, what is its height?"
-     * "When a force of 20 N is applied to an object with mass 4 kg, what is its acceleration?"
-     * "The frequency of a simple pendulum depends on which of the following factors?"
-   - MUST involve application of formulas or principles to solve a problem
-   - MUST require mathematical calculations or logical reasoning
+## INTELLIGENT QUESTION PLANNING
 
-3. HARD (Evaluate & Create): Questions that require advanced problem-solving, synthesis of multiple concepts, or evaluation of complex scenarios.
-   - Evaluate: Make judgments based on criteria, compare solutions, or determine optimal approaches
-   - Create: Combine multiple concepts to solve novel problems or derive new formulas/relationships
-   - EXAMPLES:
-     * "A rocket ejects gas at a rate of 50 kg/s with a velocity of 3000 m/s. If the rocket's initial mass is 10,000 kg, how long will it take to reach 80% of its escape velocity?"
-     * "Which combination of materials would create the most efficient heat transfer in this multi-layer insulation system?"
-     * "Given that a satellite orbits Earth at 400 km above the surface, calculate the minimum energy required to transfer it to a geosynchronous orbit."
-     * "Which of the following modifications to this circuit design would maximize power output while minimizing heat loss?"
-   - MUST require synthesis of multiple formulas or concepts
-   - MUST involve complex calculations, non-obvious relationships, or multi-step problem-solving
-   - Should require deep conceptual understanding and critical thinking
+### Question Quantity Guidelines:
+- **Minimum**: 3 questions (for very focused topics or brief conversations)
+- **Optimal Range**: 5-8 questions (for most learning sessions)
+- **Maximum**: 12 questions (for comprehensive topics or extended conversations)
+
+### Factors to Consider for Question Count:
+1. **Conversation Length**: Longer conversations with more concepts covered = more questions
+2. **Content Complexity**: Complex topics with multiple subtopics = more questions
+3. **Student Engagement**: High engagement with deep questions = more comprehensive quiz
+4. **Learning Objectives**: Number of distinct concepts covered in the conversation
+5. **Time Consideration**: Keep quiz manageable (5-15 minutes completion time)
+
+### Difficulty Distribution Intelligence:
+Analyze the conversation and content to determine appropriate difficulty mix:
+
+**For Beginner Students** (based on basic questions asked, fundamental concepts discussed):
+- 60% Easy (Remember & Understand)
+- 30% Medium (Apply & Analyze)  
+- 10% Hard (Evaluate & Create)
+
+**For Intermediate Students** (based on application questions, some problem-solving discussed):
+- 30% Easy (Remember & Understand)
+- 50% Medium (Apply & Analyze)
+- 20% Hard (Evaluate & Create)
+
+**For Advanced Students** (based on complex discussions, synthesis questions, advanced problem-solving):
+- 20% Easy (Remember & Understand)
+- 40% Medium (Apply & Analyze)
+- 40% Hard (Evaluate & Create)
+
+### Assessment Indicators:
+Look for these clues in the conversation to gauge student level:
+- **Beginner**: Asks "what is..." questions, needs basic concept explanations, struggles with terminology
+- **Intermediate**: Asks "how to..." questions, can follow step-by-step solutions, applies formulas with guidance
+- **Advanced**: Asks "why..." questions, proposes alternative solutions, connects multiple concepts
+
+## DIFFICULTY LEVELS (BLOOM'S TAXONOMY):
+
+### 1. EASY (Remember & Understand)
+Questions that test recall and basic comprehension of mathematical/physics facts, formulas, and concepts.
+- **Remember**: Recall formulas, laws, theorems, or basic concepts without applying them
+- **Understand**: Demonstrate understanding of principles by explaining relationships or giving examples
+- **Examples**:
+  * "What is the formula for the volume of a sphere?"
+  * "Which physical quantity is measured in joules?"
+  * "What is the relationship between velocity and acceleration?"
+  * "The SI unit for electric current is:"
+- **AVOID** requiring any complex analysis, interpretation, or multi-step application for EASY questions
+
+### 2. MEDIUM (Apply & Analyze)
+Questions that require application of formulas and analytical problem-solving.
+- **Apply**: Solve problems using equations, formulas, laws and theorems in straightforward applications
+- **Analyze**: Break down problems into components, determine relationships, and solve multi-step problems
+- **Examples**:
+  * "A car traveling at 60 km/h accelerates uniformly to 90 km/h in 5 seconds. What is its acceleration?"
+  * "If the lateral surface area of a cone is 44π cm² and its radius is 4 cm, what is its height?"
+  * "When a force of 20 N is applied to an object with mass 4 kg, what is its acceleration?"
+  * "The frequency of a simple pendulum depends on which of the following factors?"
+- **MUST** involve application of formulas or principles to solve a problem
+- **MUST** require mathematical calculations or logical reasoning
+
+### 3. HARD (Evaluate & Create)
+Questions that require advanced problem-solving, synthesis of multiple concepts, or evaluation of complex scenarios.
+- **Evaluate**: Make judgments based on criteria, compare solutions, or determine optimal approaches
+- **Create**: Combine multiple concepts to solve novel problems or derive new formulas/relationships
+- **Examples**:
+  * "A rocket ejects gas at a rate of 50 kg/s with a velocity of 3000 m/s. If the rocket's initial mass is 10,000 kg, how long will it take to reach 80% of its escape velocity?"
+  * "Which combination of materials would create the most efficient heat transfer in this multi-layer insulation system?"
+  * "Given that a satellite orbits Earth at 400 km above the surface, calculate the minimum energy required to transfer it to a geosynchronous orbit."
+  * "Which of the following modifications to this circuit design would maximize power output while minimizing heat loss?"
+- **MUST** require synthesis of multiple formulas or concepts
+- **MUST** involve complex calculations, non-obvious relationships, or multi-step problem-solving
+- Should require deep conceptual understanding and critical thinking
 
 Subject: {subject}
 
 Content:
 {content}
 
-MATHEMATICS AND PHYSICS QUESTION GUIDELINES:
-1. FOCUS on numerical problems with clear-cut answers (especially for medium and hard questions)
-2. INCLUDE all necessary information in the question statement
-3. AVOID ambiguous wording or unclear problem statements
-4. ENSURE units are consistent and clearly specified
-5. PROVIDE sufficient context for the problem without referencing external examples
-6. SPECIFY all relevant constraints and conditions
-7. CREATE complete, self-contained problems that don't require additional information
-8. MAKE diagram descriptions extremely detailed when diagrams are required
-9. CALCULATE problems thoroughly to ensure correct answers and distractors
+## MATHEMATICS AND PHYSICS QUESTION GUIDELINES:
+1. **FOCUS** on numerical problems with clear-cut answers (especially for medium and hard questions)
+2. **INCLUDE** all necessary information in the question statement
+3. **AVOID** ambiguous wording or unclear problem statements
+4. **ENSURE** units are consistent and clearly specified
+5. **PROVIDE** sufficient context for the problem without referencing external examples
+6. **SPECIFY** all relevant constraints and conditions
+7. **CREATE** complete, self-contained problems that don't require additional information
+8. **MAKE** diagram descriptions extremely detailed when diagrams are required
+9. **CALCULATE** problems thoroughly to ensure correct answers and distractors
 
-QUESTION INDEPENDENCE GUIDELINES:
+## QUESTION INDEPENDENCE GUIDELINES:
 1. Each question must be completely standalone and self-contained
-2. NEVER reference "examples," "problems," or any external material in the question text
-3. NEVER use phrases like "In Example 1" or "From the diagram"
-4. REWRITE any problem that depends on external reference as a complete scenario
-5. INCLUDE all necessary variables, values, and conditions within the question text
-6. ENSURE questions contain all required information to solve them
-7. ADDRESS different concepts or applications in each question
-8. TRANSFORM problems from the content into new, self-contained scenarios
-9. AVOID any implication that the question relates to a previously referenced example
+2. **NEVER** reference "examples," "problems," or any external material in the question text
+3. **NEVER** use phrases like "In Example 1" or "From the diagram"
+4. **REWRITE** any problem that depends on external reference as a complete scenario
+5. **INCLUDE** all necessary variables, values, and conditions within the question text
+6. **ENSURE** questions contain all required information to solve them
+7. **ADDRESS** different concepts or applications in each question
+8. **TRANSFORM** problems from the content into new, self-contained scenarios
+9. **AVOID** any implication that the question relates to a previously referenced example
 
-CONTENT RELEVANCE RULES:
+## CONTENT RELEVANCE RULES:
 1. Questions must be directly related to the concepts in the provided content
 2. Questions should test understanding of the same principles covered in the content
-3. ADAPT examples from the content into new problems that apply the same concepts
-4. ENSURE questions align with the specific field (mathematics/physics) of the content
-5. TRANSFORM specific examples from content into general principles
-6. CREATE new scenarios that test the same underlying mathematical/physical concepts
-7. USE similar complexity/difficulty levels as examples in the content
+3. **ADAPT** examples from the content into new problems that apply the same concepts
+4. **ENSURE** questions align with the specific field (mathematics/physics) of the content
+5. **TRANSFORM** specific examples from content into general principles
+6. **CREATE** new scenarios that test the same underlying mathematical/physical concepts
+7. **USE** similar complexity/difficulty levels as examples in the content
+
 
 Generate questions in the following JSON format:
 {{
@@ -250,8 +295,48 @@ Respond ONLY with the JSON, no explanations or additional text.
 """
     elif template_file == "question_gen_non_math.txt":
             return """You are an expert multiple-choice question (MCQ) generator for educational exams in humanities and social sciences.
-Generate {num_questions} MCQ questions based on the provided content.
-The questions should be of varying difficulty according to Bloom's Taxonomy: {difficulty_distribution}
+
+Based on the provided content and conversation context, you will intelligently determine:
+1. The optimal number of questions needed for effective assessment
+2. The appropriate difficulty distribution based on the student's learning level and content complexity
+
+## INTELLIGENT QUESTION PLANNING
+
+### Question Quantity Guidelines:
+- **Minimum**: 3 questions (for very focused topics or brief conversations)
+- **Optimal Range**: 5-8 questions (for most learning sessions)
+- **Maximum**: 12 questions (for comprehensive topics or extended conversations)
+
+### Factors to Consider for Question Count:
+1. **Conversation Length**: Longer conversations with more concepts covered = more questions
+2. **Content Complexity**: Complex topics with multiple themes/periods/theories = more questions
+3. **Student Engagement**: High engagement with deep discussions = more comprehensive quiz
+4. **Learning Objectives**: Number of distinct concepts, events, or theories covered in the conversation
+5. **Time Consideration**: Keep quiz manageable (5-15 minutes completion time)
+
+### Difficulty Distribution Intelligence:
+Analyze the conversation and content to determine appropriate difficulty mix:
+
+**For Beginner Students** (based on basic questions asked, fundamental concepts discussed):
+- 60% Easy (Remember & Understand)
+- 30% Medium (Apply & Analyze)  
+- 10% Hard (Evaluate & Create)
+
+**For Intermediate Students** (based on analytical questions, some critical thinking discussed):
+- 30% Easy (Remember & Understand)
+- 50% Medium (Apply & Analyze)
+- 20% Hard (Evaluate & Create)
+
+**For Advanced Students** (based on complex discussions, synthesis questions, advanced critical analysis):
+- 20% Easy (Remember & Understand)
+- 40% Medium (Apply & Analyze)
+- 40% Hard (Evaluate & Create)
+
+### Assessment Indicators:
+Look for these clues in the conversation to gauge student level:
+- **Beginner**: Asks "what is..." questions, needs basic concept explanations, struggles with terminology, focuses on facts and definitions
+- **Intermediate**: Asks "how does..." questions, can analyze relationships, compares different concepts, applies theories with guidance
+- **Advanced**: Asks "why..." questions, evaluates different perspectives, synthesizes multiple concepts, proposes alternative interpretations
 
 DIFFICULTY LEVELS (BLOOM'S TAXONOMY):
 1. EASY (Remember & Understand): Questions that test recall and basic comprehension of facts, definitions, and concepts.
@@ -292,36 +377,36 @@ Subject: {subject}
 Content:
 {content}
 
-HUMANITIES AND SOCIAL SCIENCES QUESTION GUIDELINES:
-1. FOCUS on testing understanding of concepts, theories, and factual knowledge
-2. INCLUDE all necessary information and context in the question statement
-3. AVOID ambiguous wording or unclear statements
-4. ENSURE questions are culturally and historically accurate
-5. PROVIDE sufficient context for the problem without referencing external examples
-6. SPECIFY all relevant details needed to answer the question
-7. CREATE complete, self-contained questions that don't require additional information
-8. MAKE map or diagram descriptions extremely detailed when such visuals are required
-9. VERIFY answers thoroughly to ensure accuracy and plausibility of distractors
+## HUMANITIES AND SOCIAL SCIENCES QUESTION GUIDELINES:
+1. **FOCUS** on testing understanding of concepts, theories, and factual knowledge
+2. **INCLUDE** all necessary information and context in the question statement
+3. **AVOID** ambiguous wording or unclear statements
+4. **ENSURE** questions are culturally and historically accurate
+5. **PROVIDE** sufficient context for the problem without referencing external examples
+6. **SPECIFY** all relevant details needed to answer the question
+7. **CREATE** complete, self-contained questions that don't require additional information
+8. **MAKE** map or diagram descriptions extremely detailed when such visuals are required
+9. **VERIFY** answers thoroughly to ensure accuracy and plausibility of distractors
 
-QUESTION INDEPENDENCE GUIDELINES:
+## QUESTION INDEPENDENCE GUIDELINES:
 1. Each question must be completely standalone and self-contained
-2. NEVER reference "passages," "texts," or any external material in the question text
-3. NEVER use phrases like "In the passage" or "From the excerpt"
-4. REWRITE any question that depends on external reference as a complete scenario
-5. INCLUDE all necessary context, quotes, or historical details within the question text
-6. ENSURE questions contain all required information to answer them
-7. ADDRESS different concepts or applications in each question
-8. TRANSFORM information from the content into new, self-contained questions
-9. AVOID any implication that the question relates to a previously referenced text
+2. **NEVER** reference "passages," "texts," or any external material in the question text
+3. **NEVER** use phrases like "In the passage" or "From the excerpt"
+4. **REWRITE** any question that depends on external reference as a complete scenario
+5. **INCLUDE** all necessary context, quotes, or historical details within the question text
+6. **ENSURE** questions contain all required information to answer them
+7. **ADDRESS** different concepts or applications in each question
+8. **TRANSFORM** information from the content into new, self-contained questions
+9. **AVOID** any implication that the question relates to a previously referenced text
 
-CONTENT RELEVANCE RULES:
+## CONTENT RELEVANCE RULES:
 1. Questions must be directly related to the concepts in the provided content
 2. Questions should test understanding of the same principles covered in the content
-3. ADAPT examples from the content into new questions that test the same concepts
-4. ENSURE questions align with the specific field (literature/history/social science) of the content
-5. TRANSFORM specific examples from content into questions about general principles
-6. CREATE new scenarios that test the same underlying concepts
-7. USE similar complexity/difficulty levels as examples in the content
+3. **ADAPT** examples from the content into new questions that test the same concepts
+4. **ENSURE** questions align with the specific field (literature/history/social science) of the content
+5. **TRANSFORM** specific examples from content into questions about general principles
+6. **CREATE** new scenarios that test the same underlying concepts
+7. **USE** similar complexity/difficulty levels as examples in the content
 
 Generate questions in the following JSON format:
 {{
@@ -873,24 +958,25 @@ def generate_questions(content, subject, num_questions, difficulty_distribution,
             conversation_context += "\nPay special attention to questions the student asked and concepts the tutor emphasized."
 
         # Load question generation prompt template
-        if subject == "Physics" or subject == "Maths":
+        if subject.lower() in ["physics", "maths"]:
             template = load_prompt_template("question_gen.txt")
         else:
             template = load_prompt_template("question_gen_non_math.txt")
 
+
         # Format prompt with stronger emphasis on question count and difficulty distribution
         prompt = template.format(
             num_questions=num_questions,
-            difficulty_distribution=difficulty_format,
+            difficulty_distribution=difficulty_format, 
             subject=subject,
             content=content_formatted
         )
 
         # Add explicit instructions about question count and difficulty distribution
-        prompt = prompt.replace("Generate {num_questions} questions",
-                               f"Generate EXACTLY {num_questions} questions. This is a requirement, not a suggestion.")
-        prompt = prompt.replace("of varying difficulty: {difficulty_distribution}",
-                               f"with EXACTLY this difficulty distribution: {difficulty_format}. Do not deviate from this distribution.")
+        # prompt = prompt.replace("Generate {num_questions} questions",
+        #                        f"Generate EXACTLY {num_questions} questions. This is a requirement, not a suggestion.")
+        # prompt = prompt.replace("of varying difficulty: {difficulty_distribution}",
+        #                        f"with EXACTLY this difficulty distribution: {difficulty_format}. Do not deviate from this distribution.")
         # Call Ollama API
         # response = requests.post('http://192.168.31.137:11434/api/generate',
         #                        json={
@@ -914,7 +1000,10 @@ def generate_questions(content, subject, num_questions, difficulty_distribution,
     Now, using the following instructions, generate high-quality MCQs:
     """
         
-        enhanced_prompt = reasoning_prefix + prompt + conversation_context
+        if subject.lower() in ["physics", "maths"]:
+            enhanced_prompt = reasoning_prefix + prompt + conversation_context
+        else: 
+            enhanced_prompt = prompt + conversation_context
 
         print("generating.........")
 
@@ -955,27 +1044,27 @@ def generate_questions(content, subject, num_questions, difficulty_distribution,
             questions = result.get('questions', [])
             print("<><><><><><><><><><><><>Question generated")
             # Ensure exactly num_questions are returned
-            if len(questions) < num_questions:
-                # If too few questions, try a second request for the remaining questions
-                print(f"Model returned only {len(questions)} questions. Requesting {num_questions - len(questions)} more...")
+            # if len(questions) < num_questions:
+            #     # If too few questions, try a second request for the remaining questions
+            #     print(f"Model returned only {len(questions)} questions. Requesting {num_questions - len(questions)} more...")
 
-                # Request for remaining questions
-                remaining_prompt = prompt.replace(
-                    f"Generate EXACTLY {num_questions} questions",
-                    f"Generate EXACTLY {num_questions - len(questions)} additional questions"
-                )
+            #     # Request for remaining questions
+            #     remaining_prompt = prompt.replace(
+            #         f"Generate EXACTLY {num_questions} questions",
+            #         f"Generate EXACTLY {num_questions - len(questions)} additional questions"
+            #     )
 
-                additional_questions = request_additional_questions(
-                    remaining_prompt,
-                    num_questions - len(questions)
-                )
+            #     additional_questions = request_additional_questions(
+            #         remaining_prompt,
+            #         num_questions - len(questions)
+            #     )
 
-                # Combine questions
-                questions.extend(additional_questions)
+            #     # Combine questions
+            #     questions.extend(additional_questions)
 
-            # If still too many or too few, adjust the list
-            if len(questions) > num_questions:
-                questions = questions[:num_questions]  # Truncate if too many
+            # # If still too many or too few, adjust the list
+            # if len(questions) > num_questions:
+            #     questions = questions[:num_questions]  # Truncate if too many
 
             # Ensure each question has required fields
             for i, question in enumerate(questions):
@@ -992,6 +1081,7 @@ def generate_questions(content, subject, num_questions, difficulty_distribution,
                 # Add subject field for later use
                 question['subject'] = subject
 
+            print("ques", questions)
             return questions
         except json.JSONDecodeError:
             print("Failed to parse JSON from model response")
@@ -1447,21 +1537,21 @@ def generate_questions_with_duplicate_check(content, subject, num_questions, dif
     unique_questions = verified_questions
 
     # If we filtered out duplicates, we need to generate more to meet the target
-    if len(unique_questions) < num_questions:
-        additional_needed = num_questions - len(unique_questions)
-        print(f"Need {additional_needed} more questions after filtering duplicates.")
+    # if len(unique_questions) < num_questions:
+    #     additional_needed = num_questions - len(unique_questions)
+    #     print(f"Need {additional_needed} more questions after filtering duplicates.")
 
-        # Generate extra questions (request more than needed to account for possible duplicates)
-        extra_questions = generate_questions(content, subject, additional_needed * 2, difficulty_distribution, conversation_data=conversation_data)
+    #     # Generate extra questions (request more than needed to account for possible duplicates)
+    #     extra_questions = generate_questions(content, subject, additional_needed * 2, difficulty_distribution, conversation_data=conversation_data)
 
-        # Filter duplicates from extra questions (against both existing and already-accepted questions)
-        extra_unique = filter_out_duplicates(extra_questions, existing_questions + unique_questions)
+    #     # Filter duplicates from extra questions (against both existing and already-accepted questions)
+    #     extra_unique = filter_out_duplicates(extra_questions, existing_questions + unique_questions)
 
-        # Add just enough of the extra questions to reach the target
-        unique_questions.extend(extra_unique[:additional_needed])
+    #     # Add just enough of the extra questions to reach the target
+    #     unique_questions.extend(extra_unique[:additional_needed])
 
     # Final trim to the exact number requested
-    return unique_questions[:num_questions]
+    return unique_questions
 
 def update_questions_with_user_selections(questions, selected_question_ids):
     for question in questions:
