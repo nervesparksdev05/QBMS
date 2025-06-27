@@ -99,6 +99,51 @@ def load_conversation_data():
 
 load_conversation_data()
 
+def search_content_via_api(query: str, doc_id: str = None, max_tokens: int = 120000):
+    try:
+        response = requests.post(
+            f'{backend_url}/api/search-content',
+            json={
+                "query": query,
+                "doc_id": doc_id,
+                "max_tokens": max_tokens
+            }
+        )
+        if response.status_code == 200:
+            return response.json().get("results", [])
+        else:
+            st.error(f"API error: {response.text}")
+            return []
+    except Exception as e:
+        st.error(f"Failed to call API: {str(e)}")
+        return []
+
+def get_relevant_content_for_question_generation(conversation_data: dict, doc_id: str):
+    if not conversation_data:
+        return None
+    
+    topic = conversation_data.get("topic", "")
+    
+    conversation_history = "\n".join(
+        [f"{msg.get('sender', msg.get('role', 'unknown'))}: {msg.get('message', msg.get('content', ''))}" 
+         for msg in conversation_data.get("messages", [])[-10:]]
+    )
+    
+    query = f"Topic: {topic}\nConversation context:\n{conversation_history}"
+    
+    results = search_content_via_api(query, doc_id=doc_id)
+    print("---------------", results)
+    
+    relevant_content = {}
+    for result in results:
+        metadata = result.get("metadata", {})
+        page_num = metadata.get("page", 1) 
+        if page_num not in relevant_content:
+            relevant_content[page_num] = ""
+        relevant_content[page_num] += f"\n\n{result['content']}"
+    
+    return relevant_content
+
 # Load existing documents
 # def load_existing_documents():
 #     if os.path.exists("data/documents_index.json"):
@@ -921,8 +966,26 @@ with generate_tab:
             if st.button("Generate Questions"):
                 with st.spinner(f"Generating questions..."):
                     # Prepare content from selected pages
-                    content_to_use = {i+1: page for i, page in enumerate(doc['content'])}
                     
+                    if st.session_state.conversation_data:
+                        relevant_content = get_relevant_content_for_question_generation(
+                            st.session_state.conversation_data,
+                            selected_doc_id
+                        )
+                        print("res", relevant_content)
+                        if relevant_content:
+                            content_to_use = relevant_content
+                            st.info(f"🎯 Using relevant content from {len(relevant_content)} pages based on your conversation")
+                        else:
+                            content_to_use = {i+1: page for i, page in enumerate(doc['content'])}
+                            st.warning("⚠️ Couldn't find relevant content, using full document")
+                    else:
+                        content_to_use = {i+1: page for i, page in enumerate(doc['content'])}
+                        st.info("💡 No conversation data found. Using full document content")
+
+                    # content_to_use = {i+1: page for i, page in enumerate(doc['content'])}
+                    
+                    # print("content", content_to_use)
                     # Generate questions with duplicate checking
                     questions = generate_questions_with_duplicate_check(
                         content=content_to_use,

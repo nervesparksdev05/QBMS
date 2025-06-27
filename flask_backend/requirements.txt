@@ -2,4 +2,9 @@ flask
 flask-cors
 PyMuPDF
 Pillow
-requests
+requests  
+streamlit
+langchain
+langchain-openai
+langchain-chroma
+chromadb

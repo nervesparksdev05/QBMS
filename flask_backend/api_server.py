@@ -1,22 +1,149 @@
 import streamlit as st
 from flask import Flask, request, jsonify
+from dotenv import load_dotenv
 from flask_cors import CORS
 import threading
 import base64
 import tempfile
 import os
 import json
-from flask_backend.pdf_parser import parse_pdf
+from pdf_parser import parse_pdf
 import time
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_chroma import Chroma
+from langchain_openai import OpenAIEmbeddings
+from langchain_core.documents import Document
+import chromadb
+from datetime import datetime
+
+load_dotenv()
 
 api_app = Flask(__name__)
 CORS(api_app)  
+
+CHROMA_DB_PATH = "data/chroma_db"
+OPENAI_API_KEY = os.getenv("CHATGPT_API_KEY")
+print("key", OPENAI_API_KEY)
 
 conversation_storage = {}
 
 STORAGE_DIR = "data/conversations"
 os.makedirs(STORAGE_DIR, exist_ok=True)
 os.makedirs("data/processed", exist_ok=True)
+
+class RAGSystem:
+    def __init__(self):
+        print("Initializing RAG system...")  
+        self.embeddings = OpenAIEmbeddings(
+            model="text-embedding-ada-002",
+            api_key=OPENAI_API_KEY, 
+        )
+        print("Embeddings initialized:", self.embeddings) 
+        self.text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200,
+            length_function=len
+        )
+        try:
+            self.vectorstore = Chroma(
+                persist_directory=CHROMA_DB_PATH,
+                embedding_function=self.embeddings
+            )
+            if not hasattr(self.vectorstore, '_collection'):
+                raise Exception("Chroma collection not initialized properly")
+        except Exception as e:
+            print(f"Failed to initialize Chroma: {str(e)}")
+            raise
+
+    def add_document(self, doc_id: str, text: str, metadata: dict = None):
+        self.delete_document(doc_id, silent=True)
+        chunks = self.text_splitter.split_text(text)
+        documents = [
+            Document(page_content=chunk, metadata={
+                "doc_id": doc_id,
+                "chunk_index": i,
+                "created_at": datetime.utcnow().isoformat(), 
+                **(metadata or {})
+            }) for i, chunk in enumerate(chunks)
+        ]
+        if documents:
+            self.vectorstore.add_documents(documents)
+            return len(documents)
+        return 0
+
+    def delete_document(self, doc_id: str, silent: bool = False):
+        collection = self.vectorstore._collection
+        existing = collection.get(where={"doc_id": doc_id})
+        if existing and existing.get("ids"):
+            collection.delete(where={"doc_id": doc_id})
+            return len(existing["ids"])
+        elif not silent:
+            print(f"No chunks found for document {doc_id}")
+        return 0
+
+    def search(self, query: str, n_results: int = 5, doc_id: str = None):
+        try:
+            filters = {"doc_id": doc_id} if doc_id else None
+            
+            results = self.vectorstore.similarity_search_with_score(
+                query=query,
+                k=n_results,
+                filter=filters
+            )
+            
+            formatted_results = []
+            for doc, score in results:
+                formatted_results.append({
+                    "content": doc.page_content,
+                    "score": float(score),
+                    "metadata": doc.metadata
+                })
+            return formatted_results
+            
+        except Exception as e:
+            print(f"Search error: {str(e)}")
+            return []
+
+    def get_relevant_content(self, query: str, max_tokens: int = 120000, doc_id: str = None):
+        try:
+            all_results = []
+            token_count = 0
+            n_results = 20
+
+            if doc_id:
+                results = self.search(query, n_results=n_results, doc_id=doc_id)
+                for result in results:
+                    content = result["content"]
+                    estimated_tokens = len(content.split()) * 1.33
+                    if token_count + estimated_tokens <= max_tokens:
+                        all_results.append(result)
+                        token_count += estimated_tokens
+                if token_count >= max_tokens * 0.8:
+                    return all_results
+
+            remaining_tokens = max_tokens - token_count
+            if remaining_tokens > 10000:
+                results = self.search(query, n_results=n_results)
+                for result in results:
+                    if doc_id and result["metadata"].get("doc_id") == doc_id:
+                        continue
+                        
+                    content = result["content"]
+                    estimated_tokens = len(content.split()) * 1.33
+                    if token_count + estimated_tokens <= max_tokens:
+                        all_results.append(result)
+                        token_count += estimated_tokens
+                    else:
+                        break
+
+            all_results.sort(key=lambda x: x["score"], reverse=True)
+            return all_results
+            
+        except Exception as e:
+            print(f"Error in get_relevant_content: {str(e)}")
+            return []
+    
+rag_system = RAGSystem()
 
 def load_existing_documents():
     if os.path.exists("data/documents_index.json"):
@@ -45,10 +172,19 @@ def upload_document():
         
         text_by_page, images_by_page = parse_pdf(temp_file_path)
 
+        full_text = "\n".join(text_by_page)
+
         documents = {}
         document_id = f"{subject.lower().replace(' ', '')}_1"
 
-        
+        metadata = {
+            "filename": filename,
+            "subject": subject,
+            "exam_type": exam_type,
+            "pages": len(text_by_page)
+        }
+        rag_system.add_document(document_id, full_text, metadata)
+
         documents[document_id] = {
             "type": "pdf",
             "name": filename,
@@ -82,6 +218,36 @@ def upload_document():
         })
 
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+@api_app.route('/api/search-content', methods=['POST'])
+def search_content():
+    try:
+        # Get and validate input
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+            
+        query = data.get('query')
+        doc_id = data.get('doc_id')
+        max_tokens = data.get('max_tokens', 120000)
+
+        if not query:
+            return jsonify({'error': 'Query is required'}), 400
+
+        # Perform search
+        results = rag_system.get_relevant_content(query, max_tokens=max_tokens, doc_id=doc_id)
+        
+        # Return properly formatted response
+        return jsonify({
+            'success': True,
+            'results': results,
+            'total_chunks': len(results),
+            'estimated_tokens': sum(len(r['content'].split()) * 1.33 for r in results)
+        })
+
+    except Exception as e:
+        print(f"API Error: {str(e)}")
         return jsonify({'error': str(e)}), 500
     
 @api_app.route('/api/documents-index')
